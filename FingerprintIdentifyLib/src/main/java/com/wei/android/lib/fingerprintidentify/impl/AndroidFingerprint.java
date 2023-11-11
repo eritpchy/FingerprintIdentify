@@ -4,10 +4,12 @@ import android.content.Context;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Build;
 
+import androidx.core.os.CancellationSignal;
+
 import com.wei.android.lib.fingerprintidentify.aosp.FingerprintManagerCompat;
 import com.wei.android.lib.fingerprintidentify.base.BaseFingerprint;
-
-import androidx.core.os.CancellationSignal;
+import com.wei.android.lib.fingerprintidentify.bean.FingerprintIdentifyFailInfo;
+import com.wei.android.lib.fingerprintidentify.util.CryptoObjectHelper;
 
 /**
  * Copyright (c) 2017 Awei
@@ -58,12 +60,13 @@ public class AndroidFingerprint extends BaseFingerprint {
     @Override
     protected void doIdentify() {
         try {
+            FingerprintManagerCompat.CryptoObject cryptoObject = new CryptoObjectHelper().createCryptoObject(this.mCipherMode, this.mCipherIV);
             mCancellationSignal = new CancellationSignal();
-            mFingerprintManagerCompat.authenticate(null, 0, mCancellationSignal, new FingerprintManagerCompat.AuthenticationCallback() {
+            mFingerprintManagerCompat.authenticate(cryptoObject, 0, mCancellationSignal, new FingerprintManagerCompat.AuthenticationCallback() {
                 @Override
                 public void onAuthenticationSucceeded(FingerprintManagerCompat.AuthenticationResult result) {
                     super.onAuthenticationSucceeded(result);
-                    onSucceed();
+                    onSucceed(result.getCryptoObject().getCipher());
                 }
 
                 @Override
@@ -81,13 +84,14 @@ public class AndroidFingerprint extends BaseFingerprint {
                         return;
                     }
 
-                    onFailed(errMsgId == FingerprintManager.FINGERPRINT_ERROR_LOCKOUT ||
-                            errMsgId == FingerprintManager.FINGERPRINT_ERROR_LOCKOUT_PERMANENT);
+                    boolean deviceLocked = errMsgId == FingerprintManager.FINGERPRINT_ERROR_LOCKOUT ||
+                            errMsgId == FingerprintManager.FINGERPRINT_ERROR_LOCKOUT_PERMANENT;
+                    onFailed(new FingerprintIdentifyFailInfo(deviceLocked, errMsgId, errString.toString()));
                 }
             }, null);
         } catch (Throwable e) {
             onCatchException(e);
-            onFailed(false);
+            onFailed(new FingerprintIdentifyFailInfo(false, e));
         }
     }
 

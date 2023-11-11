@@ -4,6 +4,10 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.wei.android.lib.fingerprintidentify.bean.FingerprintIdentifyFailInfo;
+
+import javax.crypto.Cipher;
+
 /**
  * Copyright (c) 2017 Awei
  * <p>
@@ -44,6 +48,12 @@ public abstract class BaseFingerprint {
     private boolean mIsCalledStartIdentify = false;         // if started identify
     private boolean mIsCanceledIdentify = false;            // if canceled identify
 
+    protected int mCipherMode = Cipher.ENCRYPT_MODE;
+
+    protected byte[] mCipherIV = null;
+
+    protected String mCipherKeyFallback;
+
     public BaseFingerprint(Context context, ExceptionListener exceptionListener) {
         mContext = context;
         mExceptionListener = exceptionListener;
@@ -51,12 +61,17 @@ public abstract class BaseFingerprint {
     }
 
     // DO
-    public void startIdentify(int maxAvailableTimes, IdentifyListener identifyListener) {
+    public void startIdentify(int maxAvailableTimes,
+                              int cipherMode, byte[] cipherIV, String cipherKeyFallback,
+                              IdentifyListener identifyListener) {
         mMaxAvailableTimes = maxAvailableTimes;
         mIdentifyListener = identifyListener;
         mIsCalledStartIdentify = true;
         mIsCanceledIdentify = false;
         mNumberOfFailures = 0;
+        mCipherMode = cipherMode;
+        mCipherIV = cipherIV;
+        mCipherKeyFallback = cipherKeyFallback;
 
         doIdentify();
     }
@@ -79,7 +94,7 @@ public abstract class BaseFingerprint {
     protected abstract void doCancelIdentify();
 
     // CALLBACK
-    protected void onSucceed() {
+    protected void onSucceed(Cipher cipher) {
         if (mIsCanceledIdentify) {
             return;
         }
@@ -90,7 +105,7 @@ public abstract class BaseFingerprint {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mIdentifyListener.onSucceed();
+                    mIdentifyListener.onSucceed(cipher);
                 }
             });
         }
@@ -121,15 +136,15 @@ public abstract class BaseFingerprint {
             return;
         }
 
-        onFailed(false);
+        onFailed(new FingerprintIdentifyFailInfo(false, -2, "not match"));
     }
 
-    protected void onFailed(final boolean isDeviceLocked) {
+    protected void onFailed(final FingerprintIdentifyFailInfo failInfo) {
         if (mIsCanceledIdentify) {
             return;
         }
 
-        final boolean isStartFailedByDeviceLocked = isDeviceLocked && mNumberOfFailures == 0;
+        final boolean isStartFailedByDeviceLocked = failInfo.deviceLocked && mNumberOfFailures == 0;
 
         mNumberOfFailures = mMaxAvailableTimes;
 
@@ -140,7 +155,7 @@ public abstract class BaseFingerprint {
                     if (isStartFailedByDeviceLocked) {
                         mIdentifyListener.onStartFailedByDeviceLocked();
                     } else {
-                        mIdentifyListener.onFailed(isDeviceLocked);
+                        mIdentifyListener.onFailed(failInfo);
                     }
                 }
             });
@@ -186,11 +201,11 @@ public abstract class BaseFingerprint {
     }
 
     public interface IdentifyListener {
-        void onSucceed();
+        void onSucceed(Cipher cipher);
 
         void onNotMatch(int availableTimes);
 
-        void onFailed(boolean isDeviceLocked);
+        void onFailed(FingerprintIdentifyFailInfo failInfo);
 
         void onStartFailedByDeviceLocked();
     }

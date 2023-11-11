@@ -7,6 +7,8 @@ import com.wei.android.lib.fingerprintidentify.impl.AndroidFingerprint;
 import com.wei.android.lib.fingerprintidentify.impl.MeiZuFingerprint;
 import com.wei.android.lib.fingerprintidentify.impl.SamsungFingerprint;
 
+import javax.crypto.Cipher;
+
 /**
  * Copyright (c) 2017 Awei
  * <p>
@@ -40,8 +42,29 @@ public class FingerprintIdentify {
     protected BaseFingerprint mFingerprint;
     protected BaseFingerprint mSubFingerprint;
 
+    private int mMaxAvailableTimes = 5;
+
+    private int mCipherMode = Cipher.ENCRYPT_MODE;
+
+    private byte[] mCipherIV = null;
+
+    private String mCipherKeyFallback = "FingerprintIdentify";
+
     public FingerprintIdentify(Context context) {
         mContext = context;
+    }
+
+    public void setMaxAvailableTimes(int v) {
+        this.mMaxAvailableTimes = v;
+    }
+
+    public void setCipherKeyFallback(String key) {
+        this.mCipherKeyFallback = key;
+    }
+
+    public void setCipherMode(int cipherMode, byte[] cipherIV) {
+        this.mCipherMode = cipherMode;
+        this.mCipherIV = cipherIV;
     }
 
     public void setSupportAndroidL(boolean supportAndroidL) {
@@ -81,12 +104,13 @@ public class FingerprintIdentify {
     }
 
     // DO
-    public void startIdentify(int maxAvailableTimes, BaseFingerprint.IdentifyListener listener) {
+    public void startIdentify(BaseFingerprint.IdentifyListener listener) {
         if (!isFingerprintEnable()) {
             return;
         }
 
-        mFingerprint.startIdentify(maxAvailableTimes, listener);
+        mFingerprint.startIdentify(this.mMaxAvailableTimes,
+                this.mCipherMode, this.mCipherIV, this.mCipherKeyFallback, listener);
     }
 
     public void cancelIdentify() {

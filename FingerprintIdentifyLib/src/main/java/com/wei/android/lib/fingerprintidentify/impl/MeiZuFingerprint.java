@@ -6,6 +6,10 @@ import android.text.TextUtils;
 
 import com.fingerprints.service.FingerprintManager;
 import com.wei.android.lib.fingerprintidentify.base.BaseFingerprint;
+import com.wei.android.lib.fingerprintidentify.bean.FingerprintIdentifyFailInfo;
+import com.wei.android.lib.fingerprintidentify.util.PasswordCipherHelper;
+
+import javax.crypto.Cipher;
 
 /**
  * Copyright (c) 2017 Awei
@@ -54,11 +58,12 @@ public class MeiZuFingerprint extends BaseFingerprint {
     @Override
     protected void doIdentify() {
         try {
+            Cipher cipher = PasswordCipherHelper.createCipher(this.mCipherMode, this.mCipherKeyFallback);
             mMeiZuFingerprintManager = FingerprintManager.open();
             mMeiZuFingerprintManager.startIdentify(new FingerprintManager.IdentifyCallback() {
                 @Override
                 public void onIdentified(int i, boolean b) {
-                    onSucceed();
+                    onSucceed(cipher);
                 }
 
                 @Override
@@ -68,7 +73,7 @@ public class MeiZuFingerprint extends BaseFingerprint {
             }, mMeiZuFingerprintManager.getIds());
         } catch (Throwable e) {
             onCatchException(e);
-            onFailed(false);
+            onFailed(new FingerprintIdentifyFailInfo(false, e));
         }
     }
 

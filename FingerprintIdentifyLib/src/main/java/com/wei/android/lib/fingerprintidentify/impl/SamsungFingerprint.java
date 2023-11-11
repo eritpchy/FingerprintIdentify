@@ -6,6 +6,10 @@ import com.samsung.android.sdk.pass.Spass;
 import com.samsung.android.sdk.pass.SpassFingerprint;
 import com.samsung.android.sdk.pass.SpassInvalidStateException;
 import com.wei.android.lib.fingerprintidentify.base.BaseFingerprint;
+import com.wei.android.lib.fingerprintidentify.bean.FingerprintIdentifyFailInfo;
+import com.wei.android.lib.fingerprintidentify.util.PasswordCipherHelper;
+
+import javax.crypto.Cipher;
 
 /**
  * Copyright (c) 2017 Awei
@@ -51,6 +55,7 @@ public class SamsungFingerprint extends BaseFingerprint {
 
     @Override
     protected void doIdentify() {
+        Cipher cipher = PasswordCipherHelper.createCipher(this.mCipherMode, this.mCipherKeyFallback);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -76,7 +81,7 @@ public class SamsungFingerprint extends BaseFingerprint {
                             switch (mResultCode) {
                                 case SpassFingerprint.STATUS_AUTHENTIFICATION_SUCCESS:
                                 case SpassFingerprint.STATUS_AUTHENTIFICATION_PASSWORD_SUCCESS:
-                                    onSucceed();
+                                    onSucceed(cipher);
                                     break;
 
                                 case SpassFingerprint.STATUS_SENSOR_FAILED:
@@ -94,7 +99,7 @@ public class SamsungFingerprint extends BaseFingerprint {
                                     break;
 
                                 default:
-                                    onFailed(false);
+                                    onFailed(new FingerprintIdentifyFailInfo(false, -1, "Unhandled result code: " + mResultCode));
                                     break;
                             }
                         }
@@ -103,14 +108,14 @@ public class SamsungFingerprint extends BaseFingerprint {
                     if (e instanceof SpassInvalidStateException) {
                         SpassInvalidStateException stateException = (SpassInvalidStateException) e;
                         if (stateException.getType() == 1) {
-                            onFailed(true);
+                            onFailed(new FingerprintIdentifyFailInfo(true, e));
                         } else {
                             onCatchException(e);
-                            onFailed(false);
+                            onFailed(new FingerprintIdentifyFailInfo(false, e));
                         }
                     } else {
                         onCatchException(e);
-                        onFailed(false);
+                        onFailed(new FingerprintIdentifyFailInfo(false, e));
                     }
                 }
             }
