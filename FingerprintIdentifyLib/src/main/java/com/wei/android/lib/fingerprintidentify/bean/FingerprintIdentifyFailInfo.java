@@ -1,8 +1,10 @@
 package com.wei.android.lib.fingerprintidentify.bean;
 
+import android.hardware.fingerprint.FingerprintManager;
+
 public class FingerprintIdentifyFailInfo {
     public boolean deviceLocked;
-    public int errMsgId;
+    public int errorCode;
     public String errString;
 
     public Throwable throwable;
@@ -11,9 +13,9 @@ public class FingerprintIdentifyFailInfo {
         this.deviceLocked = deviceLocked;
     }
 
-    public FingerprintIdentifyFailInfo(boolean deviceLocked, int errMsgId, String errString) {
+    public FingerprintIdentifyFailInfo(boolean deviceLocked, int errorCode, String errString) {
         this.deviceLocked = deviceLocked;
-        this.errMsgId = errMsgId;
+        this.errorCode = errorCode;
         this.errString = errString;
     }
 
@@ -22,11 +24,16 @@ public class FingerprintIdentifyFailInfo {
         this.throwable = throwable;
     }
 
+    public boolean isCancel() {
+        return this.errorCode == FingerprintManager.FINGERPRINT_ERROR_CANCELED
+            || this.errorCode == FingerprintManager.FINGERPRINT_ERROR_USER_CANCELED;
+    }
+
     @Override
     public String toString() {
         return "FingerprintIdentifyFailInfo{" +
                 "deviceLocked=" + deviceLocked +
-                ", errMsgId=" + errMsgId +
+                ", errorCode=" + errorCode +
                 ", errString='" + errString + '\'' +
                 ", throwable=" + throwable +
                 '}';

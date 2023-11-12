@@ -60,7 +60,8 @@ public class AndroidFingerprint extends BaseFingerprint {
     @Override
     protected void doIdentify() {
         try {
-            FingerprintManagerCompat.CryptoObject cryptoObject = new CryptoObjectHelper().createCryptoObject(this.mCipherMode, this.mCipherIV);
+            FingerprintManagerCompat.CryptoObject cryptoObject = new CryptoObjectHelper()
+                    .createCryptoObject(FingerprintManagerCompat.CryptoObject.class, this.mCipherMode, this.mCipherIV);
             mCancellationSignal = new CancellationSignal();
             mFingerprintManagerCompat.authenticate(cryptoObject, 0, mCancellationSignal, new FingerprintManagerCompat.AuthenticationCallback() {
                 @Override
@@ -78,12 +79,6 @@ public class AndroidFingerprint extends BaseFingerprint {
                 @Override
                 public void onAuthenticationError(int errMsgId, CharSequence errString) {
                     super.onAuthenticationError(errMsgId, errString);
-
-                    if (errMsgId == FingerprintManager.FINGERPRINT_ERROR_CANCELED ||
-                            errMsgId == FingerprintManager.FINGERPRINT_ERROR_USER_CANCELED) {
-                        return;
-                    }
-
                     boolean deviceLocked = errMsgId == FingerprintManager.FINGERPRINT_ERROR_LOCKOUT ||
                             errMsgId == FingerprintManager.FINGERPRINT_ERROR_LOCKOUT_PERMANENT;
                     onFailed(new FingerprintIdentifyFailInfo(deviceLocked, errMsgId, errString.toString()));

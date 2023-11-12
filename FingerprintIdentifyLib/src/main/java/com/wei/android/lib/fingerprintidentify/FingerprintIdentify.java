@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.wei.android.lib.fingerprintidentify.base.BaseFingerprint;
 import com.wei.android.lib.fingerprintidentify.impl.AndroidFingerprint;
+import com.wei.android.lib.fingerprintidentify.impl.BiometricImpl;
 import com.wei.android.lib.fingerprintidentify.impl.MeiZuFingerprint;
 import com.wei.android.lib.fingerprintidentify.impl.SamsungFingerprint;
 
@@ -50,6 +51,8 @@ public class FingerprintIdentify {
 
     private String mCipherKeyFallback = "FingerprintIdentify";
 
+    private boolean mUseBiometricApi = false;
+
     public FingerprintIdentify(Context context) {
         mContext = context;
     }
@@ -67,6 +70,14 @@ public class FingerprintIdentify {
         this.mCipherIV = cipherIV;
     }
 
+    public void setUseBiometricApi(boolean on) {
+        mUseBiometricApi = on;
+    }
+
+    public boolean isUsingBiometricApi() {
+        return mFingerprint instanceof BiometricImpl;
+    }
+
     public void setSupportAndroidL(boolean supportAndroidL) {
         mIsSupportAndroidL = supportAndroidL;
     }
@@ -76,6 +87,18 @@ public class FingerprintIdentify {
     }
 
     public void init() {
+
+        if (mUseBiometricApi) {
+            BiometricImpl biometricImpl = new BiometricImpl(mContext, mExceptionListener);
+            if (biometricImpl.isHardwareEnable()) {
+                mSubFingerprint = biometricImpl;
+                if (biometricImpl.isRegisteredFingerprint()) {
+                    mFingerprint = biometricImpl;
+                    return;
+                }
+            }
+        }
+
         AndroidFingerprint androidFingerprint = new AndroidFingerprint(mContext, mExceptionListener, mIsSupportAndroidL);
         if (androidFingerprint.isHardwareEnable()) {
             mSubFingerprint = androidFingerprint;

@@ -4,8 +4,7 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyPermanentlyInvalidatedException;
 import android.security.keystore.KeyProperties;
 
-import com.wei.android.lib.fingerprintidentify.aosp.FingerprintManagerCompat;
-
+import java.lang.reflect.Constructor;
 import java.security.Key;
 import java.security.KeyStore;
 
@@ -34,9 +33,10 @@ public class CryptoObjectHelper {
         keystore.load(null);
     }
 
-    public FingerprintManagerCompat.CryptoObject createCryptoObject(int opmode, byte[] iv) throws Exception {
+    public <T> T createCryptoObject(Class<T> tClass, int opmode, byte[] iv) throws Exception {
         Cipher cipher = createCipher(opmode, iv, true);
-        return new FingerprintManagerCompat.CryptoObject(cipher);
+        Constructor<T> tCon = tClass.getDeclaredConstructor(Cipher.class);
+        return tCon.newInstance(cipher);
     }
 
     Cipher createCipher(int opmode, byte[] iv, boolean retry) throws Exception {
