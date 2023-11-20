@@ -49,8 +49,6 @@ public class FingerprintIdentify {
 
     private byte[] mCipherIV = null;
 
-    private String mCipherKeyFallback = "FingerprintIdentify";
-
     private boolean mUseBiometricApi = false;
 
     public FingerprintIdentify(Context context) {
@@ -61,13 +59,13 @@ public class FingerprintIdentify {
         this.mMaxAvailableTimes = v;
     }
 
-    public void setCipherKeyFallback(String key) {
-        this.mCipherKeyFallback = key;
-    }
-
     public void setCipherMode(int cipherMode, byte[] cipherIV) {
         this.mCipherMode = cipherMode;
         this.mCipherIV = cipherIV;
+    }
+
+    public int getCipherMode() {
+        return this.mCipherMode;
     }
 
     public void setUseBiometricApi(boolean on) {
@@ -133,7 +131,7 @@ public class FingerprintIdentify {
         }
 
         mFingerprint.startIdentify(this.mMaxAvailableTimes,
-                this.mCipherMode, this.mCipherIV, this.mCipherKeyFallback, listener);
+                this.mCipherMode, this.mCipherIV, listener);
     }
 
     public void cancelIdentify() {

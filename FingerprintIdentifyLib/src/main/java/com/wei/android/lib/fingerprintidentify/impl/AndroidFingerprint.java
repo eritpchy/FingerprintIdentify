@@ -3,13 +3,13 @@ package com.wei.android.lib.fingerprintidentify.impl;
 import android.content.Context;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.core.os.CancellationSignal;
 
 import com.wei.android.lib.fingerprintidentify.aosp.FingerprintManagerCompat;
 import com.wei.android.lib.fingerprintidentify.base.BaseFingerprint;
 import com.wei.android.lib.fingerprintidentify.bean.FingerprintIdentifyFailInfo;
-import com.wei.android.lib.fingerprintidentify.util.CryptoObjectHelper;
 
 /**
  * Copyright (c) 2017 Awei
@@ -36,6 +36,7 @@ import com.wei.android.lib.fingerprintidentify.util.CryptoObjectHelper;
  */
 public class AndroidFingerprint extends BaseFingerprint {
 
+    private static final String TAG = "AndroidFingerprint";
     private CancellationSignal mCancellationSignal;
     private FingerprintManagerCompat mFingerprintManagerCompat;
 
@@ -60,14 +61,21 @@ public class AndroidFingerprint extends BaseFingerprint {
     @Override
     protected void doIdentify() {
         try {
-            FingerprintManagerCompat.CryptoObject cryptoObject = new CryptoObjectHelper()
-                    .createCryptoObject(FingerprintManagerCompat.CryptoObject.class, this.mCipherMode, this.mCipherIV);
+            FingerprintManagerCompat.CryptoObject cryptoObject = createCryptoObject(FingerprintManagerCompat.CryptoObject.class);
+            if (cryptoObject == null) {
+                Log.e(TAG, "Unable to auth with CryptoObject, use fallback instead.");
+            }
             mCancellationSignal = new CancellationSignal();
             mFingerprintManagerCompat.authenticate(cryptoObject, 0, mCancellationSignal, new FingerprintManagerCompat.AuthenticationCallback() {
                 @Override
                 public void onAuthenticationSucceeded(FingerprintManagerCompat.AuthenticationResult result) {
                     super.onAuthenticationSucceeded(result);
-                    onSucceed(result.getCryptoObject().getCipher());
+                    FingerprintManagerCompat.CryptoObject cryptoObject = result.getCryptoObject();
+                    if (cryptoObject != null) {
+                        onSucceed(cryptoObject.getCipher());
+                    } else {
+                        onSucceed(null);
+                    }
                 }
 
                 @Override

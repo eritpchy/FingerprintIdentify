@@ -4,7 +4,10 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.annotation.Nullable;
+
 import com.wei.android.lib.fingerprintidentify.bean.FingerprintIdentifyFailInfo;
+import com.wei.android.lib.fingerprintidentify.util.CryptoObjectHelper;
 
 import javax.crypto.Cipher;
 
@@ -52,8 +55,6 @@ public abstract class BaseFingerprint {
 
     protected byte[] mCipherIV = null;
 
-    protected String mCipherKeyFallback;
-
     public BaseFingerprint(Context context, ExceptionListener exceptionListener) {
         mContext = context;
         mExceptionListener = exceptionListener;
@@ -62,7 +63,7 @@ public abstract class BaseFingerprint {
 
     // DO
     public void startIdentify(int maxAvailableTimes,
-                              int cipherMode, byte[] cipherIV, String cipherKeyFallback,
+                              int cipherMode, byte[] cipherIV,
                               IdentifyListener identifyListener) {
         mMaxAvailableTimes = maxAvailableTimes;
         mIdentifyListener = identifyListener;
@@ -71,7 +72,6 @@ public abstract class BaseFingerprint {
         mNumberOfFailures = 0;
         mCipherMode = cipherMode;
         mCipherIV = cipherIV;
-        mCipherKeyFallback = cipherKeyFallback;
 
         doIdentify();
     }
@@ -94,7 +94,7 @@ public abstract class BaseFingerprint {
     protected abstract void doCancelIdentify();
 
     // CALLBACK
-    protected void onSucceed(Cipher cipher) {
+    protected void onSucceed(@Nullable Cipher cipher) {
         if (mIsCanceledIdentify) {
             return;
         }
@@ -200,8 +200,23 @@ public abstract class BaseFingerprint {
         return true;
     }
 
+    @Nullable
+    protected <T> T createCryptoObject(Class<T> tClass) {
+        int cipherMode = this.mCipherMode;
+        byte[] iv = this.mCipherIV;
+        if (cipherMode == Cipher.DECRYPT_MODE && iv == null) {
+            return null;
+        }
+        try {
+            return new CryptoObjectHelper().createCryptoObject(tClass, cipherMode, iv);
+        } catch (Exception e) {
+            onCatchException(e);
+        }
+        return null;
+    }
+
     public interface IdentifyListener {
-        void onSucceed(Cipher cipher);
+        void onSucceed(@Nullable Cipher cipher);
 
         void onNotMatch(int availableTimes);
 

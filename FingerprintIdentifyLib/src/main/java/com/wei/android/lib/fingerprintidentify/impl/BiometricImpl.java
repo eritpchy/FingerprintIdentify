@@ -15,7 +15,6 @@ import androidx.biometric.BiometricManager;
 
 import com.wei.android.lib.fingerprintidentify.base.BaseFingerprint;
 import com.wei.android.lib.fingerprintidentify.bean.FingerprintIdentifyFailInfo;
-import com.wei.android.lib.fingerprintidentify.util.CryptoObjectHelper;
 
 import java.util.Locale;
 import java.util.concurrent.Executor;
@@ -64,8 +63,10 @@ public class BiometricImpl extends BaseFingerprint {
     @Override
     protected void doIdentify() {
         try {
-            BiometricPrompt.CryptoObject cryptoObject = new CryptoObjectHelper()
-                    .createCryptoObject(BiometricPrompt.CryptoObject.class, this.mCipherMode, this.mCipherIV);
+            BiometricPrompt.CryptoObject cryptoObject = createCryptoObject(BiometricPrompt.CryptoObject.class);
+            if (cryptoObject == null) {
+                Log.e(TAG, "Unable to auth with CryptoObject, use fallback instead.");
+            }
             mCancellationSignal = new CancellationSignal();
             BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this.mContext);
             builder.setTitle(" ");
@@ -79,13 +80,18 @@ public class BiometricImpl extends BaseFingerprint {
             int authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG;
             builder.setAllowedAuthenticators(authenticators);
             builder.setDeviceCredentialAllowed(isDeviceCredentialAllowed(authenticators));
-
-            builder.build().authenticate(cryptoObject, this.mCancellationSignal, new PromptExecutor(), new BiometricPrompt.AuthenticationCallback() {
+            BiometricPrompt prompt = builder.build();
+            BiometricPrompt.AuthenticationCallback callback = new BiometricPrompt.AuthenticationCallback() {
 
                 @Override
                 public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                     super.onAuthenticationSucceeded(result);
-                    onSucceed(result.getCryptoObject().getCipher());
+                    BiometricPrompt.CryptoObject cryptoObject = result.getCryptoObject();
+                    if (cryptoObject != null) {
+                        onSucceed(cryptoObject.getCipher());
+                    } else {
+                        onSucceed(null);
+                    }
                 }
 
                 @Override
@@ -101,7 +107,12 @@ public class BiometricImpl extends BaseFingerprint {
                             errorCode == FingerprintManager.FINGERPRINT_ERROR_LOCKOUT_PERMANENT;
                     onFailed(new FingerprintIdentifyFailInfo(deviceLocked, errorCode, errString.toString()));
                 }
-            });
+            };
+            if (cryptoObject != null) {
+                prompt.authenticate(cryptoObject, this.mCancellationSignal, new PromptExecutor(), callback);
+            } else {
+                prompt.authenticate(this.mCancellationSignal, new PromptExecutor(), callback);
+            }
         } catch (Throwable e) {
             onCatchException(e);
             onFailed(new FingerprintIdentifyFailInfo(false, e));

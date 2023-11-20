@@ -1,6 +1,7 @@
 package com.wei.android.lib.fingerprintidentify.bean;
 
 import android.hardware.fingerprint.FingerprintManager;
+import android.util.Log;
 
 public class FingerprintIdentifyFailInfo {
     public boolean deviceLocked;
@@ -31,11 +32,18 @@ public class FingerprintIdentifyFailInfo {
 
     @Override
     public String toString() {
+        Throwable throwable = this.throwable;
+        Throwable cause = throwable == null ? null : throwable.getCause();
+        if (cause != null) {
+            throwable = cause;
+        }
         return "FingerprintIdentifyFailInfo{" +
                 "deviceLocked=" + deviceLocked +
                 ", errorCode=" + errorCode +
                 ", errString='" + errString + '\'' +
                 ", throwable=" + throwable +
+                ", cause=" + cause +
+                ", throwable.cause=" + Log.getStackTraceString(throwable) +
                 '}';
     }
 }

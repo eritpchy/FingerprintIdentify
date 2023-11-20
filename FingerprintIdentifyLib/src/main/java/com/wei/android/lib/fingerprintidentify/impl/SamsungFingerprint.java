@@ -7,9 +7,6 @@ import com.samsung.android.sdk.pass.SpassFingerprint;
 import com.samsung.android.sdk.pass.SpassInvalidStateException;
 import com.wei.android.lib.fingerprintidentify.base.BaseFingerprint;
 import com.wei.android.lib.fingerprintidentify.bean.FingerprintIdentifyFailInfo;
-import com.wei.android.lib.fingerprintidentify.util.PasswordCipherHelper;
-
-import javax.crypto.Cipher;
 
 /**
  * Copyright (c) 2017 Awei
@@ -55,7 +52,6 @@ public class SamsungFingerprint extends BaseFingerprint {
 
     @Override
     protected void doIdentify() {
-        Cipher cipher = PasswordCipherHelper.createCipher(this.mCipherMode, this.mCipherKeyFallback);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -81,7 +77,7 @@ public class SamsungFingerprint extends BaseFingerprint {
                             switch (mResultCode) {
                                 case SpassFingerprint.STATUS_AUTHENTIFICATION_SUCCESS:
                                 case SpassFingerprint.STATUS_AUTHENTIFICATION_PASSWORD_SUCCESS:
-                                    onSucceed(cipher);
+                                    onSucceed(null);
                                     break;
 
                                 case SpassFingerprint.STATUS_SENSOR_FAILED:
