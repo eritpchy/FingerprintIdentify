@@ -208,7 +208,11 @@ public abstract class BaseFingerprint {
             return null;
         }
         try {
-            return new CryptoObjectHelper().createCryptoObject(tClass, cipherMode, iv);
+            CryptoObjectHelper cryptoObjectHelper = new CryptoObjectHelper();
+            if (cipherMode == Cipher.ENCRYPT_MODE) {
+                cryptoObjectHelper.removeKey();
+            }
+            return cryptoObjectHelper.createCryptoObject(tClass, cipherMode, iv);
         } catch (Exception e) {
             onCatchException(e);
         }

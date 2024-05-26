@@ -6,6 +6,8 @@ import android.security.keystore.KeyPermanentlyInvalidatedException;
 import android.security.keystore.KeyProperties;
 import android.util.Log;
 
+import com.wei.android.lib.fingerprintidentify.BuildConfig;
+
 import java.lang.reflect.Constructor;
 import java.security.Key;
 import java.security.KeyStore;
@@ -76,6 +78,14 @@ public class CryptoObjectHelper {
         return secretKey;
     }
 
+    public void removeKey() {
+        try {
+            keystore.deleteEntry(KEY_NAME);
+        } catch (Exception e) {
+            Log.e(TAG, "removeKey", e);
+        }
+    }
+
     void createKey(boolean withValiditySeconds) throws Exception {
             KeyGenerator keyGen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, KEYSTORE_NAME);
             KeyGenParameterSpec.Builder builder = new KeyGenParameterSpec.Builder(KEY_NAME, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
@@ -84,16 +94,26 @@ public class CryptoObjectHelper {
                     .setRandomizedEncryptionRequired(false)
                     .setUserAuthenticationRequired(true);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                /**
+                 *  https://issuetracker.google.com/issues/191391068?pli=1
+                 *  Caused by: android.security.keystore.UserNotAuthenticatedException: User not authenticated
+                 */
+                builder.setUnlockedDeviceRequired(false);
+
                 builder.setUserPresenceRequired(false);
                 builder.setUserConfirmationRequired(false);
                 builder.setIsStrongBoxBacked(false);
             }
 //            builder.setInvalidatedByBiometricEnrollment(true);
             if (withValiditySeconds) {
+                /**
+                 * 72小时内验证一次,和小米记忆密码一样, 保障用户体验
+                 */
+                int validitySeconds = BuildConfig.DEBUG ? 0 : 24*3600*3;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    builder.setUserAuthenticationParameters(30, KeyProperties.AUTH_BIOMETRIC_STRONG);
+                    builder.setUserAuthenticationParameters(validitySeconds, KeyProperties.AUTH_BIOMETRIC_STRONG);
                 } else {
-                    builder.setUserAuthenticationValidityDurationSeconds(30);
+                    builder.setUserAuthenticationValidityDurationSeconds(validitySeconds);
                 }
             }
             KeyGenParameterSpec keyGenSpec = builder.build();

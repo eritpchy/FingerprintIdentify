@@ -15,6 +15,7 @@ import androidx.biometric.BiometricManager;
 
 import com.wei.android.lib.fingerprintidentify.base.BaseFingerprint;
 import com.wei.android.lib.fingerprintidentify.bean.FingerprintIdentifyFailInfo;
+import com.wei.android.lib.fingerprintidentify.util.NotifyUtils;
 
 import java.util.Locale;
 import java.util.concurrent.Executor;
@@ -62,11 +63,42 @@ public class BiometricImpl extends BaseFingerprint {
 
     @Override
     protected void doIdentify() {
-        try {
-            BiometricPrompt.CryptoObject cryptoObject = createCryptoObject(BiometricPrompt.CryptoObject.class);
-            if (cryptoObject == null) {
-                Log.e(TAG, "Unable to auth with CryptoObject, use fallback instead.");
+        BiometricPrompt.CryptoObject cryptoObject = createCryptoObject(BiometricPrompt.CryptoObject.class);
+        if (cryptoObject == null) {
+            Log.e(TAG, "Unable to auth with CryptoObject, retry authenticate.");
+        }
+        IAuthCallback callback = result -> {
+            BiometricPrompt.CryptoObject crypto = result.getCryptoObject();
+            if (crypto != null) {
+                onSucceed(crypto.getCipher());
+            } else {
+                onSucceed(null);
             }
+        };
+        if (cryptoObject != null) {
+            authenticate(cryptoObject, callback);
+        } else {
+            /**
+             * android.security.keystore.UserNotAuthenticatedException: User not authenticated
+             * 通常是用户使用了不够安全的方式解锁手机 或上一次验证时间已过30s + setUserAuthenticationValidityDurationSeconds(30)
+             * 先强制要求用户不用CryptoObject认证一遍先. 再走原先的认证逻辑
+             */
+            authenticate(null, result -> {
+                onNotMatch();
+                NotifyUtils.notifyFingerprintTapped(mContext);
+
+                BiometricPrompt.CryptoObject crypto = createCryptoObject(BiometricPrompt.CryptoObject.class);
+                if (crypto == null) {
+                    Log.e(TAG, "Unable to auth with CryptoObject, retry authenticate.");
+                }
+                authenticate(crypto, callback);
+            });
+        }
+
+
+    }
+    private void authenticate(BiometricPrompt.CryptoObject cryptoObject, IAuthCallback authCallback) {
+        try {
             mCancellationSignal = new CancellationSignal();
             BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this.mContext);
             builder.setTitle(" ");
@@ -86,12 +118,7 @@ public class BiometricImpl extends BaseFingerprint {
                 @Override
                 public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                     super.onAuthenticationSucceeded(result);
-                    BiometricPrompt.CryptoObject cryptoObject = result.getCryptoObject();
-                    if (cryptoObject != null) {
-                        onSucceed(cryptoObject.getCipher());
-                    } else {
-                        onSucceed(null);
-                    }
+                    authCallback.onAuthenticationSucceeded(result);
                 }
 
                 @Override
@@ -148,6 +175,11 @@ public class BiometricImpl extends BaseFingerprint {
 
     static boolean isDeviceCredentialAllowed(int authenticators) {
         return (authenticators & BiometricManager.Authenticators.DEVICE_CREDENTIAL) != 0;
+    }
+
+
+    private interface IAuthCallback {
+        void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result);
     }
 
 }
