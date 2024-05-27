@@ -106,12 +106,10 @@ public class CryptoObjectHelper {
             }
 //            builder.setInvalidatedByBiometricEnrollment(true);
             if (withValiditySeconds) {
-                /**
-                 * 72小时内验证一次,和小米记忆密码一样, 保障用户体验
-                 */
-                int validitySeconds = BuildConfig.DEBUG ? 0 : 24*3600*3;
+                int validitySeconds = BuildConfig.DEBUG ? 0 : Integer.MAX_VALUE;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    builder.setUserAuthenticationParameters(validitySeconds, KeyProperties.AUTH_BIOMETRIC_STRONG);
+                    builder.setUserAuthenticationParameters(validitySeconds,
+                            KeyProperties.AUTH_BIOMETRIC_STRONG | KeyProperties.AUTH_DEVICE_CREDENTIAL);
                 } else {
                     builder.setUserAuthenticationValidityDurationSeconds(validitySeconds);
                 }

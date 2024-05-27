@@ -82,7 +82,6 @@ public class AndroidFingerprint extends BaseFingerprint {
              * 先强制要求用户不用CryptoObject认证一遍先. 在走原先的认证逻辑
              */
             authenticate(null, result -> {
-                onNotMatch();
                 NotifyUtils.notifyFingerprintTapped(mContext);
                 FingerprintManagerCompat.CryptoObject crypto = createCryptoObject(FingerprintManagerCompat.CryptoObject.class);
                 if (crypto == null) {

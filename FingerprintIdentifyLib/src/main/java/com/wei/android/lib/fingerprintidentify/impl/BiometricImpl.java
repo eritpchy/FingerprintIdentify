@@ -84,9 +84,7 @@ public class BiometricImpl extends BaseFingerprint {
              * 先强制要求用户不用CryptoObject认证一遍先. 再走原先的认证逻辑
              */
             authenticate(null, result -> {
-                onNotMatch();
                 NotifyUtils.notifyFingerprintTapped(mContext);
-
                 BiometricPrompt.CryptoObject crypto = createCryptoObject(BiometricPrompt.CryptoObject.class);
                 if (crypto == null) {
                     Log.e(TAG, "Unable to auth with CryptoObject, retry authenticate.");
