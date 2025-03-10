@@ -3,10 +3,9 @@ apply plugin: 'com.android.library'
 android {
     namespace 'com.wei.android.lib.fingerprintidentify'
 
-    compileSdkVersion 33
+    compileSdk 34
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
     }
