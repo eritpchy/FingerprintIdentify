@@ -105,7 +105,11 @@ public abstract class BaseFingerprint {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mIdentifyListener.onSucceed(cipher);
+                    try {
+                        mIdentifyListener.onSucceed(cipher);
+                    } catch (Exception e) {
+                        onCatchException(e);
+                    }
                 }
             });
         }
@@ -124,7 +128,11 @@ public abstract class BaseFingerprint {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        mIdentifyListener.onNotMatch(chancesLeft);
+                        try {
+                            mIdentifyListener.onNotMatch(chancesLeft);
+                        } catch (Exception e) {
+                            onCatchException(e);
+                        }
                     }
                 });
             }
@@ -152,10 +160,14 @@ public abstract class BaseFingerprint {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (isStartFailedByDeviceLocked) {
-                        mIdentifyListener.onStartFailedByDeviceLocked();
-                    } else {
-                        mIdentifyListener.onFailed(failInfo);
+                    try {
+                        if (isStartFailedByDeviceLocked) {
+                            mIdentifyListener.onStartFailedByDeviceLocked();
+                        } else {
+                            mIdentifyListener.onFailed(failInfo);
+                        }
+                    } catch (Exception e) {
+                        onCatchException(e);
                     }
                 }
             });
