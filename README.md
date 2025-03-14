@@ -103,7 +103,7 @@ Api priority level：Android > Samsung > MeiZu
 
 **v1.2.6**　`2018.12.11`　Support AndroidX android.enableJetifier=true.
 
-**v1.2.5**　`2018.11.20`　minSdkVersion 21 -> 14.
+**v1.2.5**　`2018.11.20`　minSdk 21 -> 14.
 
 **v1.2.4**　`2018.11.16`　cancelIdentify will not call onFailed.
 

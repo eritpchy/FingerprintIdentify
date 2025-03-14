@@ -99,7 +99,7 @@ API调用优先级：安卓API > 三星SDK > 魅族SDK
 
 **v1.2.6**　`2018.12.11`　支持 AndroidX android.enableJetifier=true.
 
-**v1.2.5**　`2018.11.20`　minSdkVersion 21 -> 14.
+**v1.2.5**　`2018.11.20`　minSdk 21 -> 14.
 
 **v1.2.4**　`2018.11.16`　调用 cancelIdentify 关闭指纹识别不回调 onFailed。
 
