@@ -6,8 +6,6 @@ import android.security.keystore.KeyPermanentlyInvalidatedException;
 import android.security.keystore.KeyProperties;
 import android.util.Log;
 
-import com.wei.android.lib.fingerprintidentify.BuildConfig;
-
 import java.lang.reflect.Constructor;
 import java.security.Key;
 import java.security.KeyStore;
@@ -55,7 +53,7 @@ public class CryptoObjectHelper {
         } catch (KeyPermanentlyInvalidatedException e) {
             keystore.deleteEntry(KEY_NAME);
             if (retry) {
-                createCipher(opmode, iv, false);
+                return createCipher(opmode, iv, false);
             } else {
                 throw new Exception("Could not create the cipher for fingerprint authentication.", e);
             }
@@ -66,12 +64,7 @@ public class CryptoObjectHelper {
     Key getKey() throws Exception {
         Key secretKey;
         if (!keystore.isKeyEntry(KEY_NAME)) {
-            try {
-                createKey(true);
-            } catch (Exception e) {
-                Log.e(TAG, "createKey", e);
-                createKey(false);
-            }
+            createKey();
         }
 
         secretKey = keystore.getKey(KEY_NAME, null);
@@ -86,7 +79,7 @@ public class CryptoObjectHelper {
         }
     }
 
-    void createKey(boolean withValiditySeconds) throws Exception {
+    void createKey() throws Exception {
             KeyGenerator keyGen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, KEYSTORE_NAME);
             KeyGenParameterSpec.Builder builder = new KeyGenParameterSpec.Builder(KEY_NAME, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
                     .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
@@ -105,14 +98,10 @@ public class CryptoObjectHelper {
                 builder.setIsStrongBoxBacked(false);
             }
 //            builder.setInvalidatedByBiometricEnrollment(true);
-            if (withValiditySeconds) {
-                int validitySeconds = BuildConfig.DEBUG ? 0 : Integer.MAX_VALUE;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    builder.setUserAuthenticationParameters(validitySeconds,
-                            KeyProperties.AUTH_BIOMETRIC_STRONG | KeyProperties.AUTH_DEVICE_CREDENTIAL);
-                } else {
-                    builder.setUserAuthenticationValidityDurationSeconds(validitySeconds);
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                builder.setUserAuthenticationParameters(0, KeyProperties.AUTH_BIOMETRIC_STRONG);
+            } else {
+                builder.setUserAuthenticationValidityDurationSeconds(-1);
             }
             KeyGenParameterSpec keyGenSpec = builder.build();
             keyGen.init(keyGenSpec);

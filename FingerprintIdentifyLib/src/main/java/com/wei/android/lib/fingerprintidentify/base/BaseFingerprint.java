@@ -55,6 +55,10 @@ public abstract class BaseFingerprint {
 
     protected byte[] mCipherIV = null;
 
+    private Cipher mCipher;
+    public void setCipher(Cipher cipher) { mCipher = cipher; }
+    protected Throwable mCryptoObjectCreationThrowable = null;
+
     public BaseFingerprint(Context context, ExceptionListener exceptionListener) {
         mContext = context;
         mExceptionListener = exceptionListener;
@@ -212,20 +216,32 @@ public abstract class BaseFingerprint {
         return true;
     }
 
+    protected boolean requiresCryptoObject() {
+        return mCipher != null || mCipherMode == Cipher.ENCRYPT_MODE
+                || (mCipherMode == Cipher.DECRYPT_MODE && mCipherIV != null && mCipherIV.length == 16);
+    }
+
+    protected Throwable getCryptoObjectCreationThrowable() {
+        return mCryptoObjectCreationThrowable;
+    }
+
     @Nullable
     protected <T> T createCryptoObject(Class<T> tClass) {
+        mCryptoObjectCreationThrowable = null;
         int cipherMode = this.mCipherMode;
         byte[] iv = this.mCipherIV;
-        if (cipherMode == Cipher.DECRYPT_MODE && iv == null) {
+        if (mCipher == null && cipherMode == Cipher.DECRYPT_MODE && iv == null) {
             return null;
         }
         try {
+            if (mCipher != null) return tClass.getDeclaredConstructor(Cipher.class).newInstance(mCipher);
             CryptoObjectHelper cryptoObjectHelper = new CryptoObjectHelper();
             if (cipherMode == Cipher.ENCRYPT_MODE) {
                 cryptoObjectHelper.removeKey();
             }
             return cryptoObjectHelper.createCryptoObject(tClass, cipherMode, iv);
         } catch (Exception e) {
+            mCryptoObjectCreationThrowable = e;
             onCatchException(e);
         }
         return null;

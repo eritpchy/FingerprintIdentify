@@ -27,7 +27,8 @@ public class FingerprintIdentifyFailInfo {
 
     public boolean isCancel() {
         return this.errorCode == FingerprintManager.FINGERPRINT_ERROR_CANCELED
-            || this.errorCode == FingerprintManager.FINGERPRINT_ERROR_USER_CANCELED;
+            || this.errorCode == FingerprintManager.FINGERPRINT_ERROR_USER_CANCELED
+            || this.errorCode == androidx.biometric.BiometricPrompt.ERROR_NEGATIVE_BUTTON;
     }
 
     @Override

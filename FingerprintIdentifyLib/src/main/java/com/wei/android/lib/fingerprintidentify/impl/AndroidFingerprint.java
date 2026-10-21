@@ -10,7 +10,6 @@ import androidx.core.os.CancellationSignal;
 import com.wei.android.lib.fingerprintidentify.aosp.FingerprintManagerCompat;
 import com.wei.android.lib.fingerprintidentify.base.BaseFingerprint;
 import com.wei.android.lib.fingerprintidentify.bean.FingerprintIdentifyFailInfo;
-import com.wei.android.lib.fingerprintidentify.util.NotifyUtils;
 
 /**
  * Copyright (c) 2017 Awei
@@ -63,7 +62,7 @@ public class AndroidFingerprint extends BaseFingerprint {
     protected void doIdentify() {
         FingerprintManagerCompat.CryptoObject cryptoObject = createCryptoObject(FingerprintManagerCompat.CryptoObject.class);
         if (cryptoObject == null) {
-            Log.e(TAG, "Unable to auth with CryptoObject, retry authenticate.");
+            Log.e(TAG, "Unable to auth with CryptoObject.");
         }
         IAuthCallback callback = result -> {
             FingerprintManagerCompat.CryptoObject crypto = result.getCryptoObject();
@@ -76,19 +75,11 @@ public class AndroidFingerprint extends BaseFingerprint {
         if (cryptoObject != null) {
             authenticate(cryptoObject, callback);
         } else {
-            /**
-             * android.security.keystore.UserNotAuthenticatedException: User not authenticated
-             * 通常是用户使用了不够安全的方式解锁手机 或上一次验证时间已过30s + setUserAuthenticationValidityDurationSeconds(30)
-             * 先强制要求用户不用CryptoObject认证一遍先. 在走原先的认证逻辑
-             */
-            authenticate(null, result -> {
-                NotifyUtils.notifyFingerprintTapped(mContext);
-                FingerprintManagerCompat.CryptoObject crypto = createCryptoObject(FingerprintManagerCompat.CryptoObject.class);
-                if (crypto == null) {
-                    Log.e(TAG, "Unable to auth with CryptoObject, use fallback instead.");
-                }
-                authenticate(crypto, callback);
-            });
+            if (requiresCryptoObject()) {
+                onFailed(new FingerprintIdentifyFailInfo(false, getCryptoObjectCreationThrowable()));
+                return;
+            }
+            authenticate(null, callback);
         }
     }
 

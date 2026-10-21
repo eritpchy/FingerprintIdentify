@@ -15,7 +15,6 @@ import androidx.biometric.BiometricManager;
 
 import com.wei.android.lib.fingerprintidentify.base.BaseFingerprint;
 import com.wei.android.lib.fingerprintidentify.bean.FingerprintIdentifyFailInfo;
-import com.wei.android.lib.fingerprintidentify.util.NotifyUtils;
 
 import java.util.Locale;
 import java.util.concurrent.Executor;
@@ -65,7 +64,7 @@ public class BiometricImpl extends BaseFingerprint {
     protected void doIdentify() {
         BiometricPrompt.CryptoObject cryptoObject = createCryptoObject(BiometricPrompt.CryptoObject.class);
         if (cryptoObject == null) {
-            Log.e(TAG, "Unable to auth with CryptoObject, retry authenticate.");
+            Log.e(TAG, "Unable to auth with CryptoObject.");
         }
         IAuthCallback callback = result -> {
             BiometricPrompt.CryptoObject crypto = result.getCryptoObject();
@@ -78,19 +77,11 @@ public class BiometricImpl extends BaseFingerprint {
         if (cryptoObject != null) {
             authenticate(cryptoObject, callback);
         } else {
-            /**
-             * android.security.keystore.UserNotAuthenticatedException: User not authenticated
-             * 通常是用户使用了不够安全的方式解锁手机 或上一次验证时间已过30s + setUserAuthenticationValidityDurationSeconds(30)
-             * 先强制要求用户不用CryptoObject认证一遍先. 再走原先的认证逻辑
-             */
-            authenticate(null, result -> {
-                NotifyUtils.notifyFingerprintTapped(mContext);
-                BiometricPrompt.CryptoObject crypto = createCryptoObject(BiometricPrompt.CryptoObject.class);
-                if (crypto == null) {
-                    Log.e(TAG, "Unable to auth with CryptoObject, retry authenticate.");
-                }
-                authenticate(crypto, callback);
-            });
+            if (requiresCryptoObject()) {
+                onFailed(new FingerprintIdentifyFailInfo(false, getCryptoObjectCreationThrowable()));
+                return;
+            }
+            authenticate(null, callback);
         }
 
 
@@ -99,17 +90,16 @@ public class BiometricImpl extends BaseFingerprint {
         try {
             mCancellationSignal = new CancellationSignal();
             BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this.mContext);
-            builder.setTitle(" ");
+            builder.setTitle(Locale.getDefault().getLanguage().equals("zh") ? "指纹验证" : "Fingerprint verification");
             String cancelText = Locale.getDefault().getLanguage().toLowerCase().contains("zh") ? "取消" : "Cancel";
             builder.setNegativeButton(cancelText, new PromptExecutor(), (dialog, which) -> {
                 onFailed(new FingerprintIdentifyFailInfo(false,
                         FingerprintManager.FINGERPRINT_ERROR_USER_CANCELED, "user cancel"));
             });
 
-            builder.setConfirmationRequired(false);
             int authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG;
-            builder.setAllowedAuthenticators(authenticators);
-            builder.setDeviceCredentialAllowed(isDeviceCredentialAllowed(authenticators));
+            if (Build.VERSION.SDK_INT >= 29) builder.setConfirmationRequired(false);
+            if (Build.VERSION.SDK_INT >= 30) builder.setAllowedAuthenticators(authenticators);
             BiometricPrompt prompt = builder.build();
             BiometricPrompt.AuthenticationCallback callback = new BiometricPrompt.AuthenticationCallback() {
 

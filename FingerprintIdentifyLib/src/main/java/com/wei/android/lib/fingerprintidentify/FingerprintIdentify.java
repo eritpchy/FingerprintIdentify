@@ -49,6 +49,10 @@ public class FingerprintIdentify {
 
     private byte[] mCipherIV = null;
 
+    private Cipher mCipher;
+
+    public void setCipher(Cipher cipher) { mCipher = cipher; }
+
     private boolean mUseBiometricApi = false;
 
     public FingerprintIdentify(Context context) {
@@ -130,6 +134,7 @@ public class FingerprintIdentify {
             return;
         }
 
+        mFingerprint.setCipher(mCipher);
         mFingerprint.startIdentify(this.mMaxAvailableTimes,
                 this.mCipherMode, this.mCipherIV, listener);
     }
