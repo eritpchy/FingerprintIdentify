@@ -39,11 +39,22 @@ Configure these repository secrets before running **Build and publish Maven libr
 | `MAVEN_SIGNING_KEY` | ASCII-armored private GPG signing key |
 | `MAVEN_SIGNING_PASSWORD` | Signing key passphrase, if configured |
 
-Run the publishing workflow from `codex/7.0.9-preview` with the version from
-`gradle.properties`. CI verifies the version, builds and tests the library and
-demo, signs the AAR, sources, Javadoc and POM, publishes them, then waits for the
-POM and AAR to become downloadable from Maven Central. Pull requests and ordinary
-pushes build and test without publishing credentials.
+Publish a version tag from `codex/7.0.9-preview`, matching `VERSION_NAME` in
+`gradle.properties`:
+
+```sh
+git tag v1.3.0 codex/7.0.9-preview
+git push origin v1.3.0
+```
+
+CI verifies that the tag belongs to the preview branch and matches the configured
+version, builds and tests the library and demo, signs the AAR, sources, Javadoc
+and POM, publishes them, then downloads the public artifacts and compares the
+AAR with the build output. Pull requests and ordinary branch pushes build and
+test without publishing credentials.
+
+Once this workflow also exists on the default branch, manual dispatch can publish
+from `codex/7.0.9-preview` using `release_version`; leave it empty to build only.
 
 **2. AndroidManifest**
 
