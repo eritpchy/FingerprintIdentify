@@ -1,6 +1,6 @@
 # FingerprintIdentify
 
-[![Maven Central](https://img.shields.io/badge/Maven_Central-pending_publication-orange?logo=apachemaven&logoColor=white)](#maven-central)
+[![Maven Central](https://img.shields.io/maven-central/v/net.xdow/fingerprint-identify?logo=apachemaven&logoColor=white)](https://central.sonatype.com/artifact/net.xdow/fingerprint-identify)
 
 This is an expandable Android fingerprint api compatible lib, which also combine these api:
 
@@ -20,7 +20,7 @@ Api priority level：Android > Samsung > MeiZu
 
 **1. Gradle - Maven Central**
 
-Publication to Maven Central is pending. The coordinate below becomes usable once the artifact is listed on [Maven Central](https://central.sonatype.com/artifact/net.xdow/fingerprint-identify).
+Available from [Maven Central](https://central.sonatype.com/artifact/net.xdow/fingerprint-identify). The badge above links to the published versions.
 
 ```groovy
 repositories {

@@ -1,6 +1,6 @@
 # FingerprintIdentify
 
-[![Maven Central](https://img.shields.io/badge/Maven_Central-pending_publication-orange?logo=apachemaven&logoColor=white)](#maven-central)
+[![Maven Central](https://img.shields.io/maven-central/v/net.xdow/fingerprint-identify?logo=apachemaven&logoColor=white)](https://central.sonatype.com/artifact/net.xdow/fingerprint-identify)
 
 这是一个可拓展的Android指纹识别API兼容库，目前集成了以下API：
 
@@ -18,7 +18,7 @@ API调用优先级：安卓API > 三星SDK > 魅族SDK
 
 **1. Gradle - Maven Central**
 
-Maven Central 发布尚未完成。以下坐标在 [Maven Central](https://central.sonatype.com/artifact/net.xdow/fingerprint-identify) 收录制品后可用。
+已发布到 [Maven Central](https://central.sonatype.com/artifact/net.xdow/fingerprint-identify)，点击上方徽章可查看公开版本。
 
 ```groovy
 repositories {
