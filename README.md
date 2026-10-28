@@ -1,5 +1,7 @@
 # FingerprintIdentify
 
+[![Maven Central](https://img.shields.io/badge/Maven_Central-pending_publication-orange?logo=apachemaven&logoColor=white)](#maven-central)
+
 This is an expandable Android fingerprint api compatible lib, which also combine these api:
 
 Android API：minimum support for Android **6.0** [(more detail)](https://developer.android.com/reference/android/support/v4/hardware/fingerprint/FingerprintManagerCompat.html)
@@ -10,11 +12,15 @@ MeiZu SDK：minimum support for Android **5.1** [(more detail)](http://open-wiki
 
 Api priority level：Android > Samsung > MeiZu
 
-[中文版介绍 -- 传送门](https://github.com/uccmawei/FingerprintIdentify/blob/master/other/README_ZH.md)
+[中文版介绍 -- 传送门](other/README_ZH.md)
 
 [![](https://github.com/uccmawei/FingerprintIdentify/raw/master/other/QRCode_en.png)](https://github.com/uccmawei/FingerprintIdentify/raw/master/other/demo.apk)
 
-**1. Gradle**
+<a id="maven-central"></a>
+
+**1. Gradle - Maven Central**
+
+Publication to Maven Central is pending. The coordinate below becomes usable once the artifact is listed on [Maven Central](https://central.sonatype.com/artifact/net.xdow/fingerprint-identify).
 
 ```groovy
 repositories {
@@ -79,7 +85,8 @@ from `codex/7.0.9-preview` using `release_version`; leave it empty to build only
 
 **4. startIdentify method**
 
-    mFingerprintIdentify.startIdentify(3, new BaseFingerprint.IdentifyListener() {
+    mFingerprintIdentify.setMaxAvailableTimes(3);
+    mFingerprintIdentify.startIdentify(new BaseFingerprint.IdentifyListener() {
         @Override
         public void onSucceed(Cipher cipher) {
             // succeed, release hardware automatically
@@ -93,7 +100,7 @@ from `codex/7.0.9-preview` using `release_version`; leave it empty to build only
         @Override
         public void onFailed(FingerprintIdentifyFailInfo failInfo) {
             // failed, release hardware automatically
-            // isDeviceLocked: is device locked temporarily
+            // failInfo.deviceLocked reports temporary device lockout
         }
     
         @Override

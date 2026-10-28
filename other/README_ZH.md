@@ -1,5 +1,7 @@
 # FingerprintIdentify
 
+[![Maven Central](https://img.shields.io/badge/Maven_Central-pending_publication-orange?logo=apachemaven&logoColor=white)](#maven-central)
+
 这是一个可拓展的Android指纹识别API兼容库，目前集成了以下API：
 
 安卓API：最低支持安卓**6.0**系统 [(查看详细介绍)](https://developer.android.com/reference/android/support/v4/hardware/fingerprint/FingerprintManagerCompat.html)
@@ -12,17 +14,24 @@ API调用优先级：安卓API > 三星SDK > 魅族SDK
 
 [![](https://github.com/uccmawei/FingerprintIdentify/raw/master/other/QRCode_zh.png)](https://github.com/uccmawei/FingerprintIdentify/raw/master/other/demo.apk)
 
-**1. Gradle**
+<a id="maven-central"></a>
 
-    allprojects {
-    	repositories {
-    		...
-    		maven { url 'https://jitpack.io' }
-    	}
-    }
-    dependencies {
-    	implementation 'com.github.uccmawei:FingerprintIdentify:1.2.6'
-    }
+**1. Gradle - Maven Central**
+
+Maven Central 发布尚未完成。以下坐标在 [Maven Central](https://central.sonatype.com/artifact/net.xdow/fingerprint-identify) 收录制品后可用。
+
+```groovy
+repositories {
+    google()
+    mavenCentral()
+}
+dependencies {
+    implementation 'net.xdow:fingerprint-identify:1.3.0'
+}
+```
+
+Maven group 为 `net.xdow`，Java 包名保持 `com.wei.android.lib.fingerprintidentify`。
+发布流程和 CI secrets 配置见 [英文 README](../README.md#maven-central)。
 
 **2. AndroidManifest 添加权限**
 
@@ -40,15 +49,17 @@ API调用优先级：安卓API > 三星SDK > 魅族SDK
     mFingerprintIdentify.isFingerprintEnable();                 // 指纹硬件可用并已经录入指纹
     mFingerprintIdentify.isHardwareEnable();                    // 指纹硬件是否可用
     mFingerprintIdentify.isRegisteredFingerprint();             // 是否已经录入指纹
-    mFingerprintIdentify.startIdentify(maxTimes, listener);     // 开始验证指纹识别
+    mFingerprintIdentify.setMaxAvailableTimes(maxTimes);
+    mFingerprintIdentify.startIdentify(listener);     // 开始验证指纹识别
     mFingerprintIdentify.cancelIdentify();                      // 关闭指纹识别
     mFingerprintIdentify.resumeIdentify();                      // 恢复指纹识别并保证错误次数不变
 
 **4. startIdentify 方法解析**
 
-    mFingerprintIdentify.startIdentify(3, new BaseFingerprint.IdentifyListener() {
+    mFingerprintIdentify.setMaxAvailableTimes(3);
+    mFingerprintIdentify.startIdentify(new BaseFingerprint.IdentifyListener() {
         @Override
-        public void onSucceed() {
+        public void onSucceed(Cipher cipher) {
             // 验证成功，自动结束指纹识别
         }
 
@@ -58,9 +69,9 @@ API调用优先级：安卓API > 三星SDK > 魅族SDK
         }
 
         @Override
-        public void onFailed(boolean isDeviceLocked) {
+        public void onFailed(FingerprintIdentifyFailInfo failInfo) {
             // 错误次数达到上限或者API报错停止了验证，自动结束指纹识别
-            // isDeviceLocked 表示指纹硬件是否被暂时锁定
+            // failInfo.deviceLocked reports temporary device lockout
         }
 
         @Override
