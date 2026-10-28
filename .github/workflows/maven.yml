@@ -1,0 +1,83 @@
+name: Build and publish Maven library
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Version to publish from gradle.properties; leave empty to build only'
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fingerprint-identify-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate release request
+        if: github.event_name == 'workflow_dispatch' && inputs.release_version != ''
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        run: |
+          test "$GITHUB_REF" = 'refs/heads/codex/7.0.9-preview'
+          VERSION=$(sed -n 's/^VERSION_NAME=//p' gradle.properties)
+          test "$RELEASE_VERSION" = "$VERSION"
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v4
+      - name: Install Android toolchain
+        run: sdkmanager 'platforms;android-36' 'build-tools;37.0.0'
+      - name: Test and build
+        run: ./gradlew :FingerprintIdentifyLib:testDebugUnitTest :FingerprintIdentifyLib:lintRelease :FingerprintIdentifyLib:assembleRelease :FingerprintIdentifyLib:publishToMavenLocal :app:assembleDebug --no-daemon --console=plain
+      - uses: actions/upload-artifact@v7
+        with:
+          name: fingerprint-identify
+          if-no-files-found: error
+          path: |
+            FingerprintIdentifyLib/build/outputs/aar/*-release.aar
+            FingerprintIdentifyLib/build/libs/*
+            FingerprintIdentifyLib/build/publications/maven/pom-default.xml
+            FingerprintIdentifyLib/build/reports/
+            app/build/outputs/apk/debug/*.apk
+      - name: Publish to Maven Central
+        if: github.event_name == 'workflow_dispatch' && inputs.release_version != ''
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.MAVEN_SIGNING_PASSWORD }}
+        run: |
+          for NAME in ORG_GRADLE_PROJECT_mavenCentralUsername ORG_GRADLE_PROJECT_mavenCentralPassword ORG_GRADLE_PROJECT_signingInMemoryKey; do
+            test -n "${!NAME}" || { echo "::error::Missing $NAME"; exit 1; }
+          done
+          ./gradlew :FingerprintIdentifyLib:publishAndReleaseToMavenCentral --no-daemon --console=plain
+      - name: Verify public Maven artifacts
+        if: github.event_name == 'workflow_dispatch' && inputs.release_version != ''
+        run: |
+          VERSION=$(sed -n 's/^VERSION_NAME=//p' gradle.properties)
+          BASE="https://repo.maven.apache.org/maven2/net/xdow/fingerprint-identify/$VERSION/fingerprint-identify-$VERSION"
+          DEST=build/central-verification
+          mkdir -p "$DEST"
+          for SUFFIX in pom aar sources.jar javadoc.jar pom.asc aar.asc sources.jar.asc javadoc.jar.asc; do
+            case "$SUFFIX" in
+              sources*|javadoc*) URL="$BASE-$SUFFIX" ;;
+              *) URL="$BASE.$SUFFIX" ;;
+            esac
+            curl --fail --silent --show-error --location --retry 40 --retry-delay 15 --retry-all-errors --output "$DEST/${URL##*/}" "$URL"
+          done
+          cmp "FingerprintIdentifyLib/build/outputs/aar/FingerprintIdentifyLib-release.aar" "$DEST/fingerprint-identify-$VERSION.aar"
+          echo "Published net.xdow:fingerprint-identify:$VERSION" >> "$GITHUB_STEP_SUMMARY"

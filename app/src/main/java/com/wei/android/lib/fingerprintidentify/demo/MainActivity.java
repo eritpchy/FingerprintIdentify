@@ -10,6 +10,9 @@ import android.widget.Toast;
 
 import com.wei.android.lib.fingerprintidentify.FingerprintIdentify;
 import com.wei.android.lib.fingerprintidentify.base.BaseFingerprint;
+import com.wei.android.lib.fingerprintidentify.bean.FingerprintIdentifyFailInfo;
+
+import javax.crypto.Cipher;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -65,9 +68,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void start(View view) {
         append("\n" + getString(R.string.start));
-        mFingerprintIdentify.startIdentify(MAX_AVAILABLE_TIMES, new BaseFingerprint.IdentifyListener() {
+        mFingerprintIdentify.setMaxAvailableTimes(MAX_AVAILABLE_TIMES);
+        mFingerprintIdentify.startIdentify(new BaseFingerprint.IdentifyListener() {
             @Override
-            public void onSucceed() {
+            public void onSucceed(Cipher cipher) {
                 append("\n" + getString(R.string.succeed));
             }
 
@@ -77,8 +81,8 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailed(boolean isDeviceLocked) {
-                append("\n" + getString(R.string.failed) + " " + isDeviceLocked);
+            public void onFailed(FingerprintIdentifyFailInfo failInfo) {
+                append("\n" + getString(R.string.failed) + " " + failInfo.deviceLocked);
             }
 
             @Override

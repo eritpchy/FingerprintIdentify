@@ -1,26 +1,17 @@
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.library'
+    id 'com.vanniktech.maven.publish'
+}
 
 android {
     namespace 'com.wei.android.lib.fingerprintidentify'
-
-    compileSdk 34
-    defaultConfig {
-        minSdk 14
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles 'proguard-rules.pro'
-        }
-    }
-    android {
-        lintOptions {
-            abortOnError false
-        }
+    compileSdk 36
+    buildToolsVersion '37.0.0'
+    defaultConfig { minSdk 14 }
+    lint { abortOnError = false }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
@@ -28,4 +19,35 @@ dependencies {
     api fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.0.2'
     implementation 'androidx.biometric:biometric:1.1.0'
+    testImplementation 'junit:junit:4.13.2'
+}
+
+mavenPublishing {
+    coordinates('net.xdow', 'fingerprint-identify', project.version.toString())
+    publishToMavenCentral()
+    if (providers.gradleProperty('signingInMemoryKey').isPresent()) {
+        signAllPublications()
+    }
+    pom {
+        name = 'FingerprintIdentify'
+        description = 'Android fingerprint identification with biometric prompts and hardware-authorized ciphers.'
+        url = 'https://github.com/eritpchy/FingerprintIdentify'
+        inceptionYear = '2017'
+        licenses {
+            license {
+                name = 'MIT License'
+                url = 'https://opensource.org/licenses/MIT'
+                distribution = 'repo'
+            }
+        }
+        developers {
+            developer { id = 'uccmawei'; name = 'Awei'; url = 'https://github.com/uccmawei' }
+            developer { id = 'eritpchy'; name = 'Jason'; url = 'https://github.com/eritpchy' }
+        }
+        scm {
+            url = 'https://github.com/eritpchy/FingerprintIdentify'
+            connection = 'scm:git:https://github.com/eritpchy/FingerprintIdentify.git'
+            developerConnection = 'scm:git:ssh://git@github.com/eritpchy/FingerprintIdentify.git'
+        }
+    }
 }

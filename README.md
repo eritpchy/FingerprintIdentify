@@ -16,15 +16,34 @@ Api priority level：Android > Samsung > MeiZu
 
 **1. Gradle**
 
-    allprojects {
-    	repositories {
-    		...
-    		maven { url 'https://jitpack.io' }
-    	}
-    }
-    dependencies {
-    	implementation 'com.github.uccmawei:FingerprintIdentify:1.2.6'
-    }
+```groovy
+repositories {
+    google()
+    mavenCentral()
+}
+dependencies {
+    implementation 'net.xdow:fingerprint-identify:1.3.0'
+}
+```
+
+The Maven group is `net.xdow`; Java packages remain
+`com.wei.android.lib.fingerprintidentify` for source and binary compatibility.
+
+Publishing uses the Central Portal through `com.vanniktech.maven.publish`.
+Configure these repository secrets before running **Build and publish Maven library**:
+
+| Secret | Value |
+| --- | --- |
+| `MAVEN_CENTRAL_USERNAME` | Central Portal user-token username |
+| `MAVEN_CENTRAL_PASSWORD` | Central Portal user-token password |
+| `MAVEN_SIGNING_KEY` | ASCII-armored private GPG signing key |
+| `MAVEN_SIGNING_PASSWORD` | Signing key passphrase, if configured |
+
+Run the publishing workflow from `codex/7.0.9-preview` with the version from
+`gradle.properties`. CI verifies the version, builds and tests the library and
+demo, signs the AAR, sources, Javadoc and POM, publishes them, then waits for the
+POM and AAR to become downloadable from Maven Central. Pull requests and ordinary
+pushes build and test without publishing credentials.
 
 **2. AndroidManifest**
 
@@ -42,7 +61,8 @@ Api priority level：Android > Samsung > MeiZu
     mFingerprintIdentify.isFingerprintEnable();                 // is fingerprint usable
     mFingerprintIdentify.isHardwareEnable();                    // is hardware usable
     mFingerprintIdentify.isRegisteredFingerprint();             // is fingerprint collected
-    mFingerprintIdentify.startIdentify(maxTimes, listener);     // start identify
+    mFingerprintIdentify.setMaxAvailableTimes(maxTimes);         // retry limit
+    mFingerprintIdentify.startIdentify(listener);     // start identify
     mFingerprintIdentify.cancelIdentify();                      // cancel identify
     mFingerprintIdentify.resumeIdentify();                      // resume identify
 
@@ -50,7 +70,7 @@ Api priority level：Android > Samsung > MeiZu
 
     mFingerprintIdentify.startIdentify(3, new BaseFingerprint.IdentifyListener() {
         @Override
-        public void onSucceed() {
+        public void onSucceed(Cipher cipher) {
             // succeed, release hardware automatically
         }
     
@@ -60,7 +80,7 @@ Api priority level：Android > Samsung > MeiZu
         }
     
         @Override
-        public void onFailed(boolean isDeviceLocked) {
+        public void onFailed(FingerprintIdentifyFailInfo failInfo) {
             // failed, release hardware automatically
             // isDeviceLocked: is device locked temporarily
         }

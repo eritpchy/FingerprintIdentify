@@ -1,31 +1,28 @@
-apply plugin: 'com.android.application'
+plugins { id 'com.android.application' }
 
 android {
-    
-    compileSdk 34
+    namespace 'com.wei.android.lib.fingerprintidentify.demo'
+    compileSdk 36
+    buildToolsVersion '37.0.0'
     defaultConfig {
-        applicationId "com.wei.android.lib.fingerprintidentify.demo"
+        applicationId 'com.wei.android.lib.fingerprintidentify.demo'
         minSdk 21
-        targetSdk 34
+        targetSdk 36
         versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        versionName project.version.toString()
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles 'proguard-rules.pro'
-        }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.appcompat:appcompat:1.0.2'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha2'
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test:runner:1.1.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
     implementation project(':FingerprintIdentifyLib')
+    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 }
