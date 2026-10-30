@@ -28,7 +28,7 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    implementation 'net.xdow:fingerprint-identify:1.3.0'
+    implementation 'net.xdow:fingerprint-identify:1.3.1'
 }
 ```
 
@@ -49,8 +49,8 @@ Publish a version tag from `codex/7.0.9-preview`, matching `VERSION_NAME` in
 `gradle.properties`:
 
 ```sh
-git tag v1.3.0 codex/7.0.9-preview
-git push origin v1.3.0
+git tag v1.3.1 codex/7.0.9-preview
+git push origin v1.3.1
 ```
 
 CI verifies that the tag belongs to the preview branch and matches the configured

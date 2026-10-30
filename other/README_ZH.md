@@ -26,7 +26,7 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    implementation 'net.xdow:fingerprint-identify:1.3.0'
+    implementation 'net.xdow:fingerprint-identify:1.3.1'
 }
 ```
 
